@@ -1,0 +1,74 @@
+#!/bin/bash
+
+############ CITRIOM Projects Script #############
+# Version: 2.1
+# Author: Jesús Maldonado
+
+if [ "$#" -lt "2" ]; then
+	echo "ERROR: Less params than expected."
+	echo "Script usage:"
+	echo "citriom-project [project_name] [create-be | create-fe | delete]"
+	exit 1
+elif [ "$#" -gt "2" ]; then
+	echo "ERROR: More params than expected."
+	echo "Script usage:"
+	echo "citriom-project [project_name] [create-be | create-fe | delete]"
+	exit 1
+fi
+
+if [ "$2" = "create-be" ]; then
+    mkdir /home/citriom/$1 && mkdir /home/citriom/$1/public
+    echo "<h1>$1 Default Site</h1>" > /home/citriom/$1/public/index.html
+	mkdir /etc/nginx/ssl/$1
+	chown -R citriom.citriom /home/citriom/$1
+	openssl req -newkey rsa:2048 -nodes -keyout /etc/nginx/ssl/$1/privkey.key -x509 -days 365 -out /etc/nginx/ssl/$1/cert.crt -subj "/C=PR/ST=SJPR/L=PR/O=Citriom/OU=Development/CN=$1"
+	cp /opt/citriom/templates/vhost-template /etc/nginx/sites-available/$1
+	ln -s /etc/nginx/sites-available/$1 /etc/nginx/sites-enabled/
+
+	server_name="server_name $1;"
+	app_name="root /home/citriom/$1/public;"
+	cert_name="ssl_certificate /etc/nginx/ssl/$1/cert.crt;"
+	key_name="ssl_certificate_key /etc/nginx/ssl/$1/privkey.key;"
+
+	sed -i "/SERVERNAME/c $server_name" /etc/nginx/sites-available/$1
+	sed -i "/APPNAME/c $app_name" /etc/nginx/sites-available/$1
+	sed -i "/CERTNAME/c $cert_name" /etc/nginx/sites-available/$1
+	sed -i "/KEYNAME/c $key_name" /etc/nginx/sites-available/$1
+	
+	echo "127.0.0.1 $1" >> /etc/hosts
+	
+	service nginx reload
+elif [ "$2" = "create-fe" ]; then
+    mkdir /home/citriom/$1 && mkdir /home/citriom/$1/dist
+    echo "<h1>$1 Default Site</h1>" > /home/citriom/$1/dist/index.html
+	mkdir /etc/nginx/ssl/$1
+	chown -R citriom.citriom /home/citriom/$1
+	openssl req -newkey rsa:2048 -nodes -keyout /etc/nginx/ssl/$1/privkey.key -x509 -days 365 -out /etc/nginx/ssl/$1/cert.crt -subj "/C=PR/ST=SJPR/L=PR/O=Citriom/OU=Development/CN=$1"
+	cp /home/citriom/.templates/vhost-template /etc/nginx/sites-available/$1
+	ln -s /etc/nginx/sites-available/$1 /etc/nginx/sites-enabled/
+
+	server_name="server_name $1;"
+	app_name="root /home/citriom/$1/dist;"
+	cert_name="ssl_certificate /etc/nginx/ssl/$1/cert.crt;"
+	key_name="ssl_certificate_key /etc/nginx/ssl/$1/privkey.key;"
+
+	sed -i "/SERVERNAME/c $server_name" /etc/nginx/sites-available/$1
+	sed -i "/APPNAME/c $app_name" /etc/nginx/sites-available/$1
+	sed -i "/CERTNAME/c $cert_name" /etc/nginx/sites-available/$1
+	sed -i "/KEYNAME/c $key_name" /etc/nginx/sites-available/$1
+	
+	echo "127.0.0.1 $1" >> /etc/hosts
+	
+	service nginx reload
+	
+elif [ "$2" = "delete" ]; then
+	rm -Rf /home/citriom/$1
+	rm -Rf /etc/nginx/ssl/$1
+	rm -Rf /etc/nginx/sites-enabled/$1
+	rm -Rf /etc/nginx/sites-available/$1
+	sed -i "/127.0.0.1 $1/d" /etc/hosts
+	service nginx reload
+else
+	echo "citriom-project [project_name] [create-be | create-fe | delete]"
+	exit 1
+fi 
