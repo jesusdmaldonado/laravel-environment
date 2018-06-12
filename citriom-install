@@ -57,6 +57,7 @@ apt -y install mongodb-org
 apt -y install nginx curl unzip zip
 ufw allow 'Nginx HTTP'
 ufw allow 'Nginx HTTPS'
+ufw allow 3306/tcp
 systemctl restart nginx
 mkdir /etc/nginx/ssl
 apt -y install curl unzip zip
