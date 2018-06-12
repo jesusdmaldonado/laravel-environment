@@ -31,8 +31,7 @@ echo "mariadb-server mysql-server/root_password_again password $MYSQL" | sudo de
 echo "mariadb-server-10.2 mysql-server/root_password password $MYSQL" | sudo debconf-set-selections
 echo "mariadb-server-10.2 mysql-server/root_password_again password $MYSQL" | sudo debconf-set-selections
 
-apt -y install mariadb-server
-apt -y install mongodb-org mariadb-client
+apt -y install mariadb-server mariadb-client
 
 SECURE_MYSQL=$(expect -c "
 set timeout 10
@@ -54,6 +53,7 @@ expect eof
 echo "$SECURE_MYSQL"
 aptitude -y purge expect
 
+apt -y install mongodb-org
 apt -y install nginx curl unzip zip
 ufw allow 'Nginx HTTP'
 ufw allow 'Nginx HTTPS'
