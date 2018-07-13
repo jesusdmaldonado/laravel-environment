@@ -11,6 +11,7 @@ fi
 
 MYSQL="123456"
 NGINX_USER="user citriom;"
+DEFAULT_ROOT="	root /home/citriom/projects"
 FPM_USER="user = citriom"
 FPM_GROUP="group = citriom"
 
@@ -70,6 +71,7 @@ apt -y install php7.2-curl php7.2-fpm
 sed -i "/user = www-data/c $FPM_USER" /etc/php/7.2/fpm/pool.d/www.conf
 sed -i "/group = www-data/c $FPM_GROUP" /etc/php/7.2/fpm/pool.d/www.conf
 sed -i "/user www-data;/c $NGINX_USER" /etc/nginx/nginx.conf
+sed -i "36s+root.*+root /home/citriom/projects;+" /etc/nginx/sites-enabled/default
 apt -y install beanstalkd
 apt -y purge apache2
 
