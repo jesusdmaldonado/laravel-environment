@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ############ CITRIOM Projects Script #############
-# Version: 3.0
+# Version: 3.1
 # Author: Jesús Maldonado
 
 if [ ! $USER = "root" ]; then
