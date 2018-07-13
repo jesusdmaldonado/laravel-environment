@@ -11,7 +11,6 @@ fi
 
 MYSQL="123456"
 NGINX_USER="user citriom;"
-DEFAULT_ROOT="	root /home/citriom/projects"
 FPM_USER="user = citriom"
 FPM_GROUP="group = citriom"
 
