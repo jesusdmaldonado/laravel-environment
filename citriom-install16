@@ -70,7 +70,7 @@ apt -y install php7.2-curl php7.2-fpm
 sed -i "/user = www-data/c $FPM_USER" /etc/php/7.2/fpm/pool.d/www.conf
 sed -i "/group = www-data/c $FPM_GROUP" /etc/php/7.2/fpm/pool.d/www.conf
 sed -i "/user www-data;/c $NGINX_USER" /etc/nginx/nginx.conf
-sed -i "36s+root.*+root /home/citriom/projects;+" /etc/nginx/sites-enabled/default
+sed -i "41s+root.*+root /home/citriom/projects;+" /etc/nginx/sites-enabled/default
 apt -y install beanstalkd
 apt -y purge apache2
 
