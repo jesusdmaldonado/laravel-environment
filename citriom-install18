@@ -62,7 +62,7 @@ ufw allow 3306/tcp
 mkdir /etc/nginx/ssl
 apt -y install curl unzip zip
 apt -y install php7.2
-apt -y install php7.2-mbstring php7.2-pdo php7.2-mysql php7.2-bcmath php7.2-cli php7.2-dev php7.2-gd php7.2-zip php7.2-xml php-mongodb php5.6-mongo
+apt -y install php7.2-mbstring php7.2-pdo php7.2-mysql php7.2-bcmath php7.2-cli php7.2-dev php7.2-gd php7.2-zip php7.2-xml php-mongodb php7.2-mongo
 apt -y install php7.2-curl php7.2-fpm
 sed -i "/user = www-data/c $FPM_USER" /etc/php/7.2/fpm/pool.d/www.conf
 sed -i "/group = www-data/c $FPM_GROUP" /etc/php/7.2/fpm/pool.d/www.conf
