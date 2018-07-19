@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ############ CITRIOM VM Install #############
-# Version: 4.0 (Ubuntu 18.04)
+# Version: 4.1 (Ubuntu 18.04)
 # Author: Jesús Maldonado
 
 if [ $(id -u) -ne 0 ]; then
@@ -55,10 +55,15 @@ echo "$SECURE_MYSQL"
 aptitude -y purge expect
 
 apt -y install mongodb-org
+service mongod start
+systemctl enable mongod
+
 apt -y install nginx
 ufw allow 'Nginx HTTP'
 ufw allow 'Nginx HTTPS'
 ufw allow 3306/tcp
+ufw allow 27017/tcp
+
 mkdir /etc/nginx/ssl
 apt -y install curl unzip zip
 apt -y install php7.2
