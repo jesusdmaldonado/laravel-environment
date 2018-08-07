@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ############ CITRIOM VM Install #############
-# Version: 4.1 (Ubuntu 18.04)
+# Version: 5.0 (Ubuntu 18.04)
 # Author: Jesús Maldonado
 
 if [ $(id -u) -ne 0 ]; then
@@ -64,15 +64,22 @@ ufw allow 'Nginx HTTPS'
 ufw allow 3306/tcp
 ufw allow 27017/tcp
 
-mkdir /etc/nginx/ssl
+mkdir /etc/nginx/ssl && mkdir /etc/nginx/ssl/default
+openssl req -newkey rsa:2048 -nodes -keyout /etc/nginx/ssl/default/privkey.key -x509 -days 365 -out /etc/nginx/ssl/default/cert.crt -subj "/C=PR/ST=SJPR/L=PR/O=Citriom/OU=Development/CN=default"
 apt -y install curl unzip zip
 apt -y install php7.2
-apt -y install php7.2-mbstring php7.2-pdo php7.2-mysql php7.2-bcmath php7.2-cli php7.2-dev php7.2-gd php7.2-zip php7.2-xml php-mongodb php7.2-mongo
-apt -y install php7.2-curl php7.2-fpm
+apt -y install php7.2-pdo php7.2-mysql php7.2-bcmath php7.2-cli php7.2-dev php7.2-gd php7.2-zip php7.2-xml php-mongodb php7.2-mongo
+apt -y install php7.2-mbstring php7.2-curl php7.2-fpm
 sed -i "/user = www-data/c $FPM_USER" /etc/php/7.2/fpm/pool.d/www.conf
 sed -i "/group = www-data/c $FPM_GROUP" /etc/php/7.2/fpm/pool.d/www.conf
 sed -i "/user www-data;/c $NGINX_USER" /etc/nginx/nginx.conf
-sed -i "36s+root.*+root /home/citriom/projects;+" /etc/nginx/sites-enabled/default
+sed -i "s+listen 80 default_server;+#listen 80 default_server;+" /etc/nginx/sites-enabled/default
+sed -i "/:80 default_server;/c# listen [::]:80 default_server;" /etc/nginx/sites-enabled/default
+sed -i "s+#\slisten 443 ssl default_server;+listen 443 ssl default_server;+" /etc/nginx/sites-enabled/default
+sed -i "/:443 ssl default_server;/c listen [::]:443 ssl default_server;" /etc/nginx/sites-enabled/default
+sed -i "s+/var/www/html;+/home/citriom/projects;+" /etc/nginx/sites-enabled/default
+sed -i "s+index.nginx-debian.html;+index.nginx-debian.html index.php;+" /etc/nginx/sites-enabled/default
+sed -i "s+server_name _;+server_name _;\n\n\tssl_certificate /etc/nginx/ssl/default/cert.crt;\n\tssl_certificate_key /etc/nginx/ssl/default/privkey.key;+" /etc/nginx/sites-enabled/default
 service nginx restart
 service php7.2-fpm restart
 apt -y install beanstalkd
