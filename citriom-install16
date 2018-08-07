@@ -65,6 +65,7 @@ ufw allow 3306/tcp
 ufw allow 27017/tcp
 
 mkdir /etc/nginx/ssl && mkdir /etc/nginx/ssl/default
+openssl req -newkey rsa:2048 -nodes -keyout /etc/nginx/ssl/default/privkey.key -x509 -days 365 -out /etc/nginx/ssl/default/cert.crt -subj "/C=PR/ST=SJPR/L=PR/O=Citriom/OU=Development/CN=default"
 apt -y install curl unzip zip
 
 apt -y install php7.2
