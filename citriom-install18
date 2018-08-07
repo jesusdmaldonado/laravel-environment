@@ -73,6 +73,7 @@ apt -y install php7.2-mbstring php7.2-curl php7.2-fpm
 sed -i "/user = www-data/c $FPM_USER" /etc/php/7.2/fpm/pool.d/www.conf
 sed -i "/group = www-data/c $FPM_GROUP" /etc/php/7.2/fpm/pool.d/www.conf
 sed -i "/user www-data;/c $NGINX_USER" /etc/nginx/nginx.conf
+sed -i "s+server_name _;+server_name _;\n\n\tssl_certificate /etc/nginx/ssl/default/cert.crt;\n\tssl_certificate_key /etc/nginx/ssl/default/privkey.key;+" /etc/nginx/sites-enabled/default
 sed -i "s+listen 80 default_server;+#listen 80 default_server;+" /etc/nginx/sites-enabled/default
 sed -i "/:80 default_server;/c# listen [::]:80 default_server;" /etc/nginx/sites-enabled/default
 sed -i "s+#\slisten 443 ssl default_server;+listen 443 ssl default_server;+" /etc/nginx/sites-enabled/default
@@ -80,7 +81,6 @@ sed -i "/:443 ssl default_server;/c listen [::]:443 ssl default_server;" /etc/ng
 sed -i "s+# Default server configuration+# HTTPS redirection\n#\n\nserver {\n\tlisten 80 default_server;\n\tlisten [::]:80 default_server;\n\tserver_name _;\n\treturn 301 https://$host$request_uri;\n}\n\n# Default server configuration+" /etc/nginx/sites-enabled/default
 sed -i "s+/var/www/html;+/home/citriom/projects;+" /etc/nginx/sites-enabled/default
 sed -i "s+index.nginx-debian.html;+index.nginx-debian.html index.php;+" /etc/nginx/sites-enabled/default
-sed -i "s+server_name _;+server_name _;\n\n\tssl_certificate /etc/nginx/ssl/default/cert.crt;\n\tssl_certificate_key /etc/nginx/ssl/default/privkey.key;+" /etc/nginx/sites-enabled/default
 service nginx restart
 service php7.2-fpm restart
 apt -y install beanstalkd
