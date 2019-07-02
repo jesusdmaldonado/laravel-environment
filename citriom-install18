@@ -98,5 +98,6 @@ apt -y install nodejs npm && apt -y install composer
 npm -y install -g @angular/cli
 
 apt install redis -y
+sed -i "147s/.*/supervised systemd/" /etc/redis/redis.conf
 systemctl enable redis-server
 service redis-server restart
