@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ############ CITRIOM VM Install #############
-# Version: 5.4 (Ubuntu 18.04) ORI3
+# Version: 5.5 (Ubuntu 18.04) ORI3
 # Author: Jesús Maldonado
 
 if [ $(id -u) -ne 0 ]; then
@@ -97,47 +97,6 @@ service php7.2-fpm restart
 apt -y install nodejs npm && apt -y install composer
 npm -y install -g @angular/cli
 
-sudo adduser --system --group --no-create-home redis
-
-cd /tmp
-curl -O http://download.redis.io/redis-stable.tar.gz
-
-tar xzvf redis-stable.tar.gz
-
-cd redis-stable
-make
-make test
-make install
-
-mkdir /etc/redis
-mkdir /var/lib/redis
-cp /tmp/redis-stable/redis.conf /etc/redis
-
-redis_current="supervised no"
-redis_new="supervised systemd"
-sed -i "147s/.*/supervised systemd/" /etc/redis/redis.conf
-
-redis_current="dir ./"
-redis_new="dir /var/lib/redis"
-sed -i "263s/.*/dir \/var\/lib\/redis/" /etc/redis/redis.conf
-
-touch /etc/systemd/system/redis.service
-
-echo "[Unit]
-Description=Redis In-Memory Data Store
-After=network.target
-
-[Service]
-User=redis
-Group=redis
-ExecStart=/usr/local/bin/redis-server /etc/redis/redis.conf
-ExecStop=/usr/local/bin/redis-cli shutdown
-Restart=always
-
-[Install]
-WantedBy=multi-user.target" > /etc/systemd/system/redis.service
-
-chown redis:redis /var/lib/redis
-chmod 770 /var/lib/redis
-systemctl enable redis
-systemctl start redis
+apt install redis -y
+systemctl enable redis-server
+service redis-server restart
