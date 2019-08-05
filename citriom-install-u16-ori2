@@ -1,0 +1,111 @@
+#!/bin/bash
+
+############ CITRIOM VM Install #############
+# Version: 5.5 (Ubuntu 16.04) ORI3
+# Author: Jesús Maldonado
+
+if [ $(id -u) -ne 0 ]; then
+	echo "Run this script as root user only"
+	exit 1
+fi
+
+MYSQL="123456"
+NGINX_USER="user citriom;"
+
+apt update
+apt -y upgrade
+apt -y install python-software-properties expect
+echo | add-apt-repository ppa:ondrej/php
+echo | add-apt-repository ppa:ondrej/nginx
+echo | add-apt-repository ppa:chris-lea/redis-server
+apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xF1656F24C74CD1D8
+add-apt-repository 'deb [arch=amd64,i386,ppc64el] http://nyc2.mirrors.digitalocean.com/mariadb/repo/10.3/ubuntu xenial main'
+apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 0C49F3730359A14518585931BC711F9BA15703C6
+echo "deb [ arch=amd64,arm64 ] http://repo.mongodb.org/apt/ubuntu xenial/mongodb-org/3.4 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-3.4.list
+apt update
+apt -y upgrade
+
+echo "mariadb-server mysql-server/root_password password $MYSQL" | sudo debconf-set-selections
+echo "mariadb-server mysql-server/root_password_again password $MYSQL" | sudo debconf-set-selections
+echo "mariadb-server-10.3 mysql-server/root_password password $MYSQL" | sudo debconf-set-selections
+echo "mariadb-server-10.3 mysql-server/root_password_again password $MYSQL" | sudo debconf-set-selections
+
+apt -y install mariadb-server mariadb-client
+
+SECURE_MYSQL=$(expect -c "
+set timeout 10
+spawn mysql_secure_installation
+expect \"Enter current password for root (enter for none):\"
+send \"$MYSQL\r\"
+expect \"Change the root password?\"
+send \"n\r\"
+expect \"Remove anonymous users?\"
+send \"y\r\"
+expect \"Disallow root login remotely?\"
+send \"n\r\"
+expect \"Remove test database and access to it?\"
+send \"y\r\"
+expect \"Reload privilege tables now?\"
+send \"y\r\"
+expect eof
+")
+echo "$SECURE_MYSQL"
+aptitude -y purge expect
+
+apt -y install mongodb-org
+service mongod start
+systemctl enable mongod
+apt -y install nginx curl unzip zip
+systemctl restart nginx
+
+ufw allow 'Nginx HTTP'
+ufw allow 'Nginx HTTPS'
+ufw allow 3306/tcp
+ufw allow 27017/tcp
+
+mkdir /etc/nginx/ssl && mkdir /etc/nginx/ssl/default
+openssl req -newkey rsa:2048 -nodes -keyout /etc/nginx/ssl/default/privkey.key -x509 -days 365 -out /etc/nginx/ssl/default/cert.crt -subj "/C=PR/ST=SJPR/L=PR/O=Citriom/OU=Development/CN=default"
+apt -y install curl unzip zip
+
+apt -y install memcached php5.6
+apt -y install php-mongodb php5.6-pdo php5.6-mysql php5.6-bcmath php5.6-cli php5.6-mcrypt php-pear php5.6-dev php5.6-gd php5.6-zip php5.6-xml php-memcached
+apt -y install php5.6-mbstring php5.6-curl php5.6-fpm
+sed -i "23s/.*/user = citriom/" /etc/php/5.6/fpm/pool.d/www.conf
+sed -i "24s/.*/group = citriom/" /etc/php/5.6/fpm/pool.d/www.conf
+#sed -i "47s/.*/listen.owner = citriom/" /etc/php/5.6/fpm/pool.d/www.conf
+#sed -i "48s/.*/listen.group = citriom/" /etc/php/5.6/fpm/pool.d/www.conf
+sed -i "/user www-data;/c $NGINX_USER" /etc/nginx/nginx.conf
+sed -i "s+server_name _;+server_name _;\n\n\tssl_certificate /etc/nginx/ssl/default/cert.crt;\n\tssl_certificate_key /etc/nginx/ssl/default/privkey.key;+" /etc/nginx/sites-available/default
+sed -i "s+listen 80 default_server;+#listen 80 default_server;+" /etc/nginx/sites-available/default
+sed -i "/:80 default_server;/c# listen [::]:80 default_server;" /etc/nginx/sites-available/default
+sed -i "s+#\slisten 443 ssl default_server;+listen 443 ssl default_server;+" /etc/nginx/sites-available/default
+sed -i "/:443 ssl default_server;/c listen [::]:443 ssl default_server;" /etc/nginx/sites-available/default
+sed -i "s+# Default server configuration+# HTTPS redirection\n#\n\nserver {\n\tlisten 80 default_server;\n\tlisten [::]:80 default_server;\n\tserver_name _;\n\treturn 301 https://$host$request_uri;\n}\n# Default server configuration+" /etc/nginx/sites-available/default
+sed -i "s+/var/www/html;+/home/citriom/projects;+" /etc/nginx/sites-available/default
+sed -i "s+index.nginx-debian.html;+index.nginx-debian.html index.php;+" /etc/nginx/sites-available/default
+rm /etc/nginx/sites-enabled/default
+ln -s /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
+apt -y install beanstalkd
+apt -y purge apache2
+apt autoremove -y
+
+service nginx restart 
+service php5.6-fpm restart
+mkdir /opt/php-composer && cd /opt/php-composer
+php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+php -r "if (hash_file('SHA384', 'composer-setup.php') === '544e09ee996cdf60ece3804abc52599c22b1f40f4323403c44d44fdfdd586475ca9813a858088ffbc1f233e9b180f061') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;"
+php composer-setup.php
+php -r "unlink('composer-setup.php');"
+ln -s /opt/php-composer/composer.phar /usr/bin/composer
+cd /home/citriom
+
+curl -sL https://deb.nodesource.com/setup_6.x | sudo -E bash -
+apt -y install nodejs
+npm -y install -g @angular/cli
+
+apt install redis-server
+
+sed -i "147s/.*/supervised systemd/" /etc/redis/redis.conf
+
+systemctl enable redis
+systemctl start redis
