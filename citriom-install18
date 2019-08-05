@@ -18,6 +18,7 @@ apt -y install build-essential
 apt -y install software-properties-common tcl expect
 echo | add-apt-repository ppa:ondrej/php
 echo | add-apt-repository ppa:ondrej/nginx
+echo | add-apt-repository ppa:chris-lea/redis-server
 apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xF1656F24C74CD1D8
 add-apt-repository 'deb [arch=amd64] http://nyc2.mirrors.digitalocean.com/mariadb/repo/10.3/ubuntu bionic main'
 apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 0C49F3730359A14518585931BC711F9BA15703C6
